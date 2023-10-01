@@ -1,0 +1,91 @@
+x-deploy-policy: &x-deploy-policy
+  replicas: 1
+  update_config:
+    parallelism: 1
+    delay: 30s
+    order: stop-first
+    failure_action: rollback
+  rollback_config:
+    parallelism: 1
+    delay: 30s
+  restart_policy:
+    condition: on-failure
+    delay: 30s
+    max_attempts: 3
+    window: 120s
+
+x-default-logging: &x-default-logging
+  options:
+    max-size: "12m"
+    max-file: "5"
+  driver: json-file
+
+services:
+  grafana:
+    image: grafana/grafana:10.1.2
+    networks:
+      - docker_metrics
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana:/var/lib/grafana
+    env_file: .env
+    configs:
+      # Grafana provisioning dashboards
+      - source: dashboard-default
+        target: /etc/grafana/provisioning/dashboards/default.yaml
+
+      # Grafana provisioning datasources
+      - source: prometheus-datasources
+        target: /etc/grafana/provisioning/datasources/prometheus.yaml
+      - source: alertmanager-datasources
+        target: /etc/grafana/provisioning/datasources/alertmanager.yaml
+      - source: loki-datasources
+        target: /etc/grafana/provisioning/datasources/loki.yaml
+      
+      # Grafana dashboards
+      - source: node-metrics-dashboard
+        target: /dashboards/grafana-dashboard-node-metrics.json
+      - source: container-metrics-dashboard
+        target: /dashboards/grafana-dashboard-container-metrics.json
+      - source: loki-container-logging-dashboard
+        target: /dashboards/loki-container-logging-dashboard.json
+    deploy: *x-deploy-policy
+    logging: *x-default-logging
+
+volumes:
+  grafana:
+    name: grafana-{{.Task.Slot}}
+
+networks:
+  docker_metrics:
+    name: docker_metrics
+    external: true
+
+configs:
+  # Grafana provisioning dashboards
+  dashboard-default:
+    name: grafana-dashboard-default-v1.0.yaml
+    file: grafana/provisioning/dashboards/default.yaml
+
+  # Grafana provisioning datasources
+  prometheus-datasources:
+    name: grafana-prometheus-datasources-v1.0.yaml
+    file: grafana/provisioning/datasources/prometheus.yaml
+  alertmanager-datasources:
+    name: grafana-alertmanager-datasources-v1.0.yaml
+    file: grafana/provisioning/datasources/alertmanager.yaml
+  loki-datasources:
+    name: grafana-loki-datasources-v1.0.yaml
+    file: grafana/provisioning/datasources/loki.yaml
+
+  # Grafana dashboards
+  node-metrics-dashboard:
+    name: grafana-dashboard-node-metrics-v1.0.json
+    file: grafana/provisioning/dashboards/grafana-dashboard-node-metrics.json
+  container-metrics-dashboard:
+    name: grafana-dashboard-container-metrics-v1.0.json
+    file: grafana/provisioning/dashboards/grafana-dashboard-container-metrics.json
+  loki-container-logging-dashboard:
+    name: loki-container-logging-dashboard-v1.0.yaml
+    file: grafana/provisioning/dashboards/loki-container-logging-dashboard.json
