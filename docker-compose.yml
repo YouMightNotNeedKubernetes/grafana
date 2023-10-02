@@ -47,7 +47,7 @@ services:
     image: grafana/grafana:10.1.2
     user: root
     entrypoint: ["/bin/sh", "-c"]
-    command: ["sleep 30; /run.sh"]
+    command: ["sleep 60; /run.sh"]
     env_file: .env
     networks:
       - dockerswarm_monitoring
@@ -66,7 +66,7 @@ services:
   grafana-replicate:
     image: litestream/litestream
     entrypoint: ["/bin/sh", "-c"]
-    command: ["sleep 15; /usr/local/bin/litestream replicate"]
+    command: ["sleep 30; /usr/local/bin/litestream replicate"]
     env_file: .env
     volumes:
       - grafana:/var/lib/grafana
