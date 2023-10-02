@@ -1,6 +1,5 @@
 docker_stack_name = grafana
 
-
 it:
 	@echo "make [deploy|destroy]"
 

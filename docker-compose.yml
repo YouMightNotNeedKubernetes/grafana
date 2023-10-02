@@ -20,72 +20,68 @@ x-default-logging: &x-default-logging
     max-file: "5"
   driver: json-file
 
+configs:
+  grafana.ini:
+    name: grafana-v1.0.ini
+    file: configs/grafana.ini
+  litestream.yml:
+    name: litestream-v1.0.yml
+    file: configs/litestream.yml
+
 services:
-  grafana:
+  grafana-init:
+    image: litestream/litestream
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["/usr/local/bin/litestream restore -v -if-db-not-exists -if-replica-exists $${GF_PATHS_DATA}/grafana.db"]
+    env_file: .env
+    volumes:
+      - grafana:/var/lib/grafana
+    configs:
+      - source: litestream.yml
+        target: /etc/litestream.yml
+    deploy:
+      mode: replicated-job
+    logging: *x-default-logging
+
+  grafana-server:
     image: grafana/grafana:10.1.2
+    user: root
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["sleep 30; /run.sh"]
+    env_file: .env
     networks:
-      - docker_metrics
+      - dockerswarm_monitoring
     ports:
       - 3000:3000
     volumes:
       - grafana:/var/lib/grafana
-    env_file: .env
     configs:
-      # Grafana provisioning dashboards
-      - source: dashboard-default
-        target: /etc/grafana/provisioning/dashboards/default.yaml
+      - source: grafana.ini
+        target: /etc/grafana/grafana.ini
+    depends_on:
+      - grafana-init
+    deploy: *x-deploy-policy
+    logging: *x-default-logging
 
-      # Grafana provisioning datasources
-      - source: prometheus-datasources
-        target: /etc/grafana/provisioning/datasources/prometheus.yaml
-      - source: alertmanager-datasources
-        target: /etc/grafana/provisioning/datasources/alertmanager.yaml
-      - source: loki-datasources
-        target: /etc/grafana/provisioning/datasources/loki.yaml
-      
-      # Grafana dashboards
-      - source: node-metrics-dashboard
-        target: /dashboards/grafana-dashboard-node-metrics.json
-      - source: container-metrics-dashboard
-        target: /dashboards/grafana-dashboard-container-metrics.json
-      - source: loki-container-logging-dashboard
-        target: /dashboards/loki-container-logging-dashboard.json
+  grafana-replicate:
+    image: litestream/litestream
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["sleep 15; /usr/local/bin/litestream replicate"]
+    env_file: .env
+    volumes:
+      - grafana:/var/lib/grafana
+    configs:
+      - source: litestream.yml
+        target: /etc/litestream.yml
+    depends_on:
+      - grafana-init
     deploy: *x-deploy-policy
     logging: *x-default-logging
 
 volumes:
   grafana:
-    name: grafana-{{.Task.Slot}}
 
 networks:
-  docker_metrics:
-    name: docker_metrics
+  dockerswarm_monitoring:
+    name: dockerswarm_monitoring
     external: true
-
-configs:
-  # Grafana provisioning dashboards
-  dashboard-default:
-    name: grafana-dashboard-default-v1.0.yaml
-    file: grafana/provisioning/dashboards/default.yaml
-
-  # Grafana provisioning datasources
-  prometheus-datasources:
-    name: grafana-prometheus-datasources-v1.0.yaml
-    file: grafana/provisioning/datasources/prometheus.yaml
-  alertmanager-datasources:
-    name: grafana-alertmanager-datasources-v1.0.yaml
-    file: grafana/provisioning/datasources/alertmanager.yaml
-  loki-datasources:
-    name: grafana-loki-datasources-v1.0.yaml
-    file: grafana/provisioning/datasources/loki.yaml
-
-  # Grafana dashboards
-  node-metrics-dashboard:
-    name: grafana-dashboard-node-metrics-v1.0.json
-    file: grafana/provisioning/dashboards/grafana-dashboard-node-metrics.json
-  container-metrics-dashboard:
-    name: grafana-dashboard-container-metrics-v1.0.json
-    file: grafana/provisioning/dashboards/grafana-dashboard-container-metrics.json
-  loki-container-logging-dashboard:
-    name: loki-container-logging-dashboard-v1.0.yaml
-    file: grafana/provisioning/dashboards/loki-container-logging-dashboard.json
