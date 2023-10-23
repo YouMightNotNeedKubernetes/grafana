@@ -21,7 +21,7 @@ x-default-logging: &x-default-logging
   driver: json-file
 
 services:
-  grafana-server:
+  grafana:
     image: grafana/grafana:10.1.2
     env_file: .env
     environment:
