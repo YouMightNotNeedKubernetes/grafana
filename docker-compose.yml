@@ -20,11 +20,6 @@ x-default-logging: &x-default-logging
     max-file: "5"
   driver: json-file
 
-configs:
-  grafana.ini:
-    name: grafana-v1.0.ini
-    file: configs/grafana.ini
-
 services:
   grafana-server:
     image: grafana/grafana:10.1.2
@@ -37,9 +32,6 @@ services:
       - 3000:3000
     volumes:
       - grafana:/var/lib/grafana
-    configs:
-      - source: grafana.ini
-        target: /etc/grafana/grafana.ini
     depends_on:
       - grafana-init
     deploy: *x-deploy-policy
