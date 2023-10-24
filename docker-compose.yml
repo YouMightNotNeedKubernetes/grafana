@@ -22,7 +22,7 @@ x-default-logging: &x-default-logging
 
 services:
   grafana:
-    image: grafana/grafana:10.1.2
+    image: grafana/grafana:${GRAFANA_VERSION:-latest}
     env_file: .env
     environment:
       - GF_LOG_LEVEL=info
