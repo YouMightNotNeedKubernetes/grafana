@@ -1,9 +1,11 @@
 x-deploy-policy: &x-deploy-policy
-  replicas: 1
+  replicas: ${GRAFANA_REPLICAS:-3}
+  labels:
+    io.prometheus.job: grafana
   update_config:
     parallelism: 1
     delay: 30s
-    order: stop-first
+    order: start-first
     failure_action: rollback
   rollback_config:
     parallelism: 1
@@ -20,9 +22,23 @@ x-default-logging: &x-default-logging
     max-file: "5"
   driver: json-file
 
+networks:
+  dockerswarm_monitoring:
+    name: dockerswarm_monitoring
+    external: true
+
+volumes:
+  grafana:
+    external: true
+
+configs:
+  grafana.ini:
+    file: configs/grafana.ini
+
 services:
   grafana:
     image: grafana/grafana:${GRAFANA_VERSION:-latest}
+    hostname: grafana-{{.Task.Slot}}-{{.Task.ID}}
     env_file: .env
     environment:
       - GF_LOG_LEVEL=info
@@ -32,16 +48,10 @@ services:
       - 3000:3000
     volumes:
       - grafana:/var/lib/grafana
+    configs:
+      - source: grafana.ini
+        target: /etc/grafana/grafana.ini
     depends_on:
       - grafana-init
     deploy: *x-deploy-policy
     logging: *x-default-logging
-
-volumes:
-  grafana:
-    external: true
-
-networks:
-  dockerswarm_monitoring:
-    name: dockerswarm_monitoring
-    external: true
