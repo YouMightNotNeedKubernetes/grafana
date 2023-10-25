@@ -1,5 +1,3 @@
--include .env.release
-
 docker_stack_name = grafana
 
 .PHONY: configs
