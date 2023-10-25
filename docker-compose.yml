@@ -1,7 +1,5 @@
 x-deploy-policy: &x-deploy-policy
   replicas: ${GRAFANA_REPLICAS:-3}
-  labels:
-    io.prometheus.job: grafana
   update_config:
     parallelism: 1
     delay: 30s
