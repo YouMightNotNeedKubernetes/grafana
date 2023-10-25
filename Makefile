@@ -1,5 +1,10 @@
 docker_stack_name = grafana
 
+compose_files := -c docker-compose.yml
+ifneq ("$(wildcard docker-compose.override.yml)","")
+	compose_files += -c docker-compose.override.yml
+endif
+
 .PHONY: configs
 configs: configs/grafana.ini
 
@@ -10,7 +15,7 @@ it:
 	@echo "make [deploy|destroy]"
 
 deploy:
-	docker stack deploy -c docker-compose.yml $(docker_stack_name)
+	docker stack deploy $(compose_files) $(docker_stack_name)
 
 destroy:
 	docker stack rm $(docker_stack_name)
