@@ -45,13 +45,11 @@ services:
     networks:
       - dockerswarm_monitoring
     ports:
-      - 3000:3000
+      - ${GRAFANA_PORT:-3000}:3000
     volumes:
       - grafana:/var/lib/grafana
     configs:
       - source: grafana.ini
         target: /etc/grafana/grafana.ini
-    depends_on:
-      - grafana-init
     deploy: *x-deploy-policy
     logging: *x-default-logging
