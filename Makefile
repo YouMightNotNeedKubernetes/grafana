@@ -1,3 +1,4 @@
+GRAFANA_VERSION = latest
 docker_stack_name = grafana
 
 compose_files := -c docker-compose.yml
