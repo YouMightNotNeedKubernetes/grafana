@@ -1,5 +1,11 @@
 x-deploy-policy: &x-deploy-policy
   replicas: ${GRAFANA_REPLICAS:-3}
+  labels:
+    # Prometheus
+    io.prometheus.enabled: "true"
+    io.prometheus.scrape_port: "3000"
+    # Promtail
+    io.promtail.enabled: "true"
   update_config:
     parallelism: 1
     delay: 30s
