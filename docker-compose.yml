@@ -45,9 +45,16 @@ services:
     hostname: grafana-{{.Task.Slot}}-{{.Task.ID}}
     env_file: .env
     environment:
+      # General
       - GF_LOG_LEVEL=info
+      - GF_NEWS_ENABLED=false
       - GC_CHECK_FOR_UPDATES=false
       - GF_REPORTING_ENABLED=false
+      - GF_SUPPORT_BUNDLES_ENABLED=false
+      # Unified Alerting
+      - GF_UNIFIED_ALERTING_HA_PEERS=tasks.grafana:9094
+      # Metrics
+      - GF_METRICS_ENABLED=true
     networks:
       - dockerswarm_monitoring
     ports:
